@@ -1,12 +1,10 @@
-"""Entry point: copy the pre-rendered poster to the output location.
+"""Copy the pre-rendered 21 November 2026 news poster to the output path.
 
-The grader runs `python3 -P -s /bot/main.py` in a sandbox with no
-network and only the standard library (RULES.txt: "standard library
-only: nothing is installed before it runs"), so this entrypoint does
-not draw anything: it copies the poster PNG that ships in the
-repository to the output path. The destination can be overridden
-with --out, or with the MAKEFUN_OUTPUT_DIR environment variable (a
-plain directory path).
+The grader runs this file with only the standard library available and
+no network, so it must not import anything beyond stdlib and must not
+draw: the poster PNG ships in this repository and is copied verbatim.
+Pass --out <path> to choose the destination, or set MAKEFUN_OUTPUT_DIR
+to a directory; otherwise the image goes to /output/entry.png.
 """
 
 import argparse
@@ -14,29 +12,29 @@ import os
 import shutil
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-SOURCE = HERE / "entry.png"
+POSTER = Path(__file__).resolve().parent / "entry.png"
 
 
-def _destination(cli_out):
-    if cli_out:
-        return Path(cli_out)
-    env_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "").strip()
-    if env_dir:
-        return Path(env_dir) / "entry.png"
+def pick_destination():
+    parser = argparse.ArgumentParser(
+        description="Copy the 21 Nov 2026 news poster to the output path."
+    )
+    parser.add_argument("--out", default="", help="output PNG path (default: /output/entry.png)")
+    opts = parser.parse_args()
+    if opts.out:
+        return Path(opts.out)
+    outdir = os.environ.get("MAKEFUN_OUTPUT_DIR", "").strip()
+    if outdir:
+        return Path(outdir) / "entry.png"
     return Path("/output/entry.png")
 
 
-def main(argv=None):
-    parser = argparse.ArgumentParser(description="Copy the 21 Nov 2026 news poster to the output path.")
-    parser.add_argument("--out", default=None, help="output PNG path (default: /output/entry.png)")
-    args = parser.parse_args(argv)
-    target = _destination(args.out)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(SOURCE, target)
-    print(f"wrote {target}")
-    return 0
+def main():
+    dest = pick_destination()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(POSTER, dest)
+    print("wrote", dest)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
